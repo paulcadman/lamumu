@@ -9,8 +9,8 @@ def ppVar (v : Var) : String :=
   s!"x_{v}"
 
 def ppCoVar : CoVar → String
-  | 0 => "★"
-  | n => s!"α_{n - 1}"
+  | .star => "★"
+  | .idx n => s!"α_{n}"
 
 def ppOp : Op -> String
   | .add => "+"

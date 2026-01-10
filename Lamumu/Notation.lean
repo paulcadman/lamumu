@@ -44,8 +44,8 @@ macro_rules
       let s := id.getId.toString
       match parseSubscript "α_" s with
       | some n =>
-          let lit := Syntax.mkNumLit (toString <| n + 1)
-          return ← `(($lit : CoVar))
+          let lit := Syntax.mkNumLit (toString <| n)
+          return ← `((CoVar.idx $lit : CoVar))
       | none =>
           match parseSubscript "x_" s with
           | some n =>
@@ -83,20 +83,20 @@ macro_rules
       let s := id.getId.toString
       match parseSubscript "α_" s with
       | some n =>
-          let lit := Syntax.mkNumLit (toString <| n + 1)
-          `(Producer.mu ($lit : CoVar) $body)
+          let lit := Syntax.mkNumLit (toString <| n)
+          `(Producer.mu (CoVar.idx $lit : CoVar) $body)
       | none => Macro.throwUnsupported
   | `(μ $id:ident . $body:term) => do
       let s := id.getId.toString
       match parseSubscript "α_" s with
       | some n =>
-          let lit := Syntax.mkNumLit (toString <| n + 1)
-          `(Producer.mu ($lit : CoVar) $body)
+          let lit := Syntax.mkNumLit (toString <| n)
+          `(Producer.mu (CoVar.idx $lit : CoVar) $body)
       | none => Macro.throwUnsupported
 
 notation "μ[" α "] " s => Producer.mu α s
 notation "mu[" α "] " s => Producer.mu α s
 notation "⌜" n "⌝" => lit n
-notation "★" => Consumer.covar 0
+notation "★" => Consumer.covar CoVar.star
 
 end Core

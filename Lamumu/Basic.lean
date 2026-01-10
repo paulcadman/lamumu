@@ -9,7 +9,11 @@ def Op.eval (op : Op) (n m : Int) : Int :=
   | .sub => n - m
 
 abbrev Var := Nat
-abbrev CoVar := Nat
+
+inductive CoVar where
+  | star : CoVar
+  | idx : Nat → CoVar
+  deriving Repr, BEq
 
 namespace Fun
 
@@ -46,8 +50,6 @@ inductive Statement where
   deriving Repr
 end
 
-def covar_star : Consumer := .covar 0
-
 instance : Coe CoVar Consumer :=
   ⟨Consumer.covar⟩
 
@@ -64,7 +66,7 @@ abbrev FreshM := StateM Nat
 def freshCoVar : FreshM CoVar := do
   let n ← get
   set (n + 1)
-  pure n
+  .idx n |> pure
 
 def translate' : Fun.Term → FreshM Core.Producer
  | .var x => pure <| .var x

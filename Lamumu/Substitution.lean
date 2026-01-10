@@ -16,6 +16,7 @@ def freshFrom (used : List Nat) : Nat :=
   | [] => 0
   | _ => maxList used + 1
 
+
 mutual
   def freeVarsProducer : Producer -> List Var
     | .var v => [v]
@@ -32,15 +33,17 @@ mutual
 end
 
 mutual
-  def freeCoVarsProducer : Producer -> List CoVar
+  def freeCoVarsProducer : Producer -> List Nat
     | .var _ => []
     | .lit _ => []
-    | .mu α s => removeAll (freeCoVarsStmt s) α
+    | .mu (.idx n) s => removeAll (freeCoVarsStmt s) n
+    | .mu .star _ => []
 
-  def freeCoVarsConsumer : Consumer -> List CoVar
-    | .covar α => [α]
+  def freeCoVarsConsumer : Consumer -> List Nat
+    | .covar (.idx n) => [n]
+    | .covar .star => []
 
-  def freeCoVarsStmt : Statement -> List CoVar
+  def freeCoVarsStmt : Statement -> List Nat
     | .prim _ p1 p2 c => freeCoVarsProducer p1 ++ freeCoVarsProducer p2 ++ freeCoVarsConsumer c
     | .ifz p s1 s2 => freeCoVarsProducer p ++ freeCoVarsStmt s1 ++ freeCoVarsStmt s2
     | .cut p c => freeCoVarsProducer p ++ freeCoVarsConsumer c
@@ -49,13 +52,13 @@ end
 def freshVarFrom (xs : List (List Var)) : Var :=
   freshFrom (unionLists xs)
 
-def freshCoVarFrom (xs : List (List CoVar)) : CoVar :=
-  freshFrom (unionLists xs)
+def freshCoVarFrom (xs : List (List Nat)) : CoVar :=
+  freshFrom (unionLists xs) |> .idx
 
-def freeCoVarsSubst (ps : List (Producer × Var)) : List CoVar :=
+def freeCoVarsSubst (ps : List (Producer × Var)) : List Nat :=
   ps.foldl (fun acc (p, _) => acc ++ freeCoVarsProducer p) []
 
-def freeCoVarsCoSubst (cs : List (Consumer × CoVar)) : List CoVar :=
+def freeCoVarsCoSubst (cs : List (Consumer × CoVar)) : List Nat :=
   cs.foldl (fun acc (c, _) => acc ++ freeCoVarsConsumer c) []
 
 def lookupVar (ps : List (Producer × Var)) (v : Var) : Option Producer :=
@@ -64,7 +67,7 @@ def lookupVar (ps : List (Producer × Var)) (v : Var) : Option Producer :=
   | none => none
 
 def lookupCoVar (cs : List (Consumer × CoVar)) (α : CoVar) : Option Consumer :=
-  match cs.find? (fun (_, α') => α' = α) with
+  match cs.find? (fun (_, α') => α' == α) with
   | some (c, _) => some c
   | none => none
 
