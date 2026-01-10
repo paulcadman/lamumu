@@ -1,0 +1,10 @@
+name = "lamumu"
+version = "0.1.0"
+defaultTargets = ["lamumu"]
+
+[[lean_lib]]
+name = "Lamumu"
+
+[[lean_exe]]
+name = "lamumu"
+root = "Main"
