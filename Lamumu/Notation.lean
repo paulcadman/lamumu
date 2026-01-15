@@ -94,6 +94,16 @@ macro_rules
           `(Producer.mu (CoVar.idx $lit : CoVar) $body)
       | none => Macro.throwUnsupported
 
+syntax "μ̃ " ident " . " term : term
+macro_rules
+  | `(μ̃ $id:ident . $body:term) => do
+      let s := id.getId.toString
+      match parseSubscript "x_" s with
+      | some n =>
+          let lit := Syntax.mkNumLit (toString <| n)
+          `(Consumer.mu_tilde $lit $body)
+      | none => Macro.throwUnsupported
+
 notation "μ[" α "] " s => Producer.mu α s
 notation "mu[" α "] " s => Producer.mu α s
 notation "⌜" n "⌝" => lit n

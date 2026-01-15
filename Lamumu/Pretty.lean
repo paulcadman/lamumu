@@ -25,6 +25,7 @@ mutual
 
   def ppConsumer : Consumer -> String
     | .covar a => ppCoVar a
+    | .mu_tilde a s => s!"μ̃ {ppVar a} . {ppStatement s}"
 
   def ppStatement : Statement -> String
     | .prim op p1 p2 c => s!"{ppOp op}({ppProducer p1}, {ppProducer p2}; {ppConsumer c})"

@@ -25,6 +25,7 @@ mutual
 
   def freeVarsConsumer : Consumer -> List Var
     | .covar _ => []
+    | .mu_tilde v s => removeAll (freeVarsStmt s) v
 
   def freeVarsStmt : Statement -> List Var
     | .prim _ p1 p2 c => freeVarsProducer p1 ++ freeVarsProducer p2 ++ freeVarsConsumer c
@@ -42,6 +43,7 @@ mutual
   def freeCoVarsConsumer : Consumer -> List Nat
     | .covar (.idx n) => [n]
     | .covar .star => []
+    | .mu_tilde _ s => freeCoVarsStmt s
 
   def freeCoVarsStmt : Statement -> List Nat
     | .prim _ p1 p2 c => freeCoVarsProducer p1 ++ freeCoVarsProducer p2 ++ freeCoVarsConsumer c
@@ -60,6 +62,12 @@ def freeCoVarsSubst (ps : List (Producer × Var)) : List Nat :=
 
 def freeCoVarsCoSubst (cs : List (Consumer × CoVar)) : List Nat :=
   cs.foldl (fun acc (c, _) => acc ++ freeCoVarsConsumer c) []
+
+def freeVarsSubst (ps : List (Producer × Var)) : List Var :=
+  ps.foldl (fun acc (p, _) => acc ++ freeVarsProducer p) []
+
+def freeVarsCoSubst (cs : List (Consumer × CoVar)) : List Var :=
+  cs.foldl (fun acc (c, _) => acc ++ freeVarsConsumer c) []
 
 def lookupVar (ps : List (Producer × Var)) (v : Var) : Option Producer :=
   match ps.find? (fun (_, v') => v' = v) with
@@ -86,12 +94,17 @@ mutual
         let s' := substSimStmt [] [(.covar α', α)] s
         .mu α' (substSimStmt ps cs s')
 
-  partial def substSimConsumer (_ps : List (Producer × Var)) (cs : List (Consumer × CoVar)) :
+  partial def substSimConsumer (ps : List (Producer × Var)) (cs : List (Consumer × CoVar)) :
       Consumer -> Consumer
     | .covar α =>
         match lookupCoVar cs α with
         | some c => c
         | none => .covar α
+    | .mu_tilde v s =>
+        let avoid := [freeVarsStmt s, ps.map (fun (_, v') => v'), freeVarsSubst ps, freeVarsCoSubst cs]
+        let v' := freshVarFrom avoid
+        let s' := substSimStmt [(.var v', v)] [] s
+        .mu_tilde v' (substSimStmt ps cs s')
 
   partial def substSimStmt (ps : List (Producer × Var)) (cs : List (Consumer × CoVar)) :
       Statement -> Statement

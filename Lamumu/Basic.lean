@@ -41,6 +41,7 @@ inductive Producer where
 
 inductive Consumer where
   | covar : CoVar → Consumer
+  | mu_tilde : Var → Statement → Consumer
   deriving Repr
 
 inductive Statement where
@@ -49,6 +50,15 @@ inductive Statement where
   | cut : Producer → Consumer → Statement
   deriving Repr
 end
+
+def Producer.isValue : Producer → Bool
+  | .lit _ => True
+  | .var _ => False
+  | .mu _ _ => False
+
+def Consumer.isCoValue : Consumer → Bool
+  | .mu_tilde _ _ => True
+  | .covar _ => True
 
 instance : Coe CoVar Consumer :=
   ⟨Consumer.covar⟩
