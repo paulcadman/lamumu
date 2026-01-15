@@ -21,7 +21,11 @@ def showEval : Except EvalError Statement → String
 -- Example that needs focusing
 #eval ⟨μ α_0 . (*(⌜4⌝, (μ α_1 . *(⌜2⌝, ⌜3⌝; α_1)); α_0)) | ★⟩
   |> step -- *(⌜4⌝, μ α_2 . *(⌜2⌝, ⌜3⌝; α_2); ★)
-  |>.bind step
+  |>.map Focus.focusStatement -- ⟨μ α_2 . *(⌜2⌝, ⌜3⌝; α_2) | μ̃ x_0 . *(⌜4⌝, x_0; ★)⟩
+  |>.bind step -- *(⌜2⌝, ⌜3⌝; μ̃ x_0 . *(⌜4⌝, x_0; ★))
+  |>.bind step -- ⟨⌜6⌝ | μ̃ x_0 . *(⌜4⌝, x_0; ★)⟩
+  |>.bind step -- *(⌜4⌝, ⌜6⌝; ★)
+  |>.bind step -- ⟨⌜24⌝ | ★⟩
   |> showEval
 
 def main : IO Unit :=

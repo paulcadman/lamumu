@@ -53,7 +53,7 @@ end
 
 def Producer.isValue : Producer → Bool
   | .lit _ => True
-  | .var _ => False
+  | .var _ => True
   | .mu _ _ => False
 
 def Consumer.isCoValue : Consumer → Bool
