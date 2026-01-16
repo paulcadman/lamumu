@@ -1,6 +1,6 @@
 inductive Op where
   | add | mul | sub
-  deriving Repr
+  deriving Repr, DecidableEq
 
 def Op.eval (op : Op) (n m : Int) : Int :=
   match op with
@@ -13,7 +13,7 @@ abbrev Var := Nat
 inductive CoVar where
   | star : CoVar
   | idx : Nat → CoVar
-  deriving Repr, BEq
+  deriving Repr, DecidableEq
 
 namespace Fun
 
@@ -37,18 +37,18 @@ inductive Producer where
   | var : Var → Producer
   | lit : Int → Producer
   | mu : CoVar → Statement → Producer
-  deriving Repr
+  deriving Repr, DecidableEq
 
 inductive Consumer where
   | covar : CoVar → Consumer
   | mu_tilde : Var → Statement → Consumer
-  deriving Repr
+  deriving Repr, DecidableEq
 
 inductive Statement where
   | prim : Op → Producer → Producer → Consumer → Statement
   | ifz : Producer → Statement → Statement → Statement
   | cut : Producer → Consumer → Statement
-  deriving Repr
+  deriving Repr, DecidableEq
 end
 
 def Producer.isValue : Producer → Bool
