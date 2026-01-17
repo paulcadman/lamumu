@@ -10,35 +10,6 @@ def parseSubscript (pfx : String) (s : String) : Option Nat :=
   else
     none
 
-namespace Lean.Parser
-
-declare_syntax_cat coreProducer
-declare_syntax_cat coreConsumer
-declare_syntax_cat coreStatement
-declare_syntax_cat coreOp
-
-syntax num : coreProducer
-syntax "-" num : coreProducer
-syntax ident : coreProducer
-syntax "μ " ident " . " coreStatement : coreProducer
-
-syntax ident : coreConsumer
-
-syntax "add" : coreOp
-syntax "mul" : coreOp
-syntax "sub" : coreOp
-syntax "+" : coreOp
-syntax "*" : coreOp
-syntax "-" : coreOp
-
-syntax "⟨" coreProducer " | " coreConsumer "⟩" : coreStatement
-syntax "<" coreProducer " | " coreConsumer ">" : coreStatement
-syntax "+(" coreProducer ", " coreProducer "; " coreConsumer ")" : coreStatement
-syntax "*(" coreProducer ", " coreProducer "; " coreConsumer ")" : coreStatement
-syntax "-(" coreProducer ", " coreProducer "; " coreConsumer ")" : coreStatement
-
-end Lean.Parser
-
 macro_rules
   | `($id:ident) => do
       let s := id.getId.toString
@@ -71,6 +42,7 @@ notation "⟨" p " | " c "⟩" => Statement.cut p c
 syntax "+(" term ", " term "; " term ")" : term
 syntax "*(" term ", " term "; " term ")" : term
 syntax "-(" term ", " term "; " term ")" : term
+
 macro_rules
   | `(+( $p1:term, $p2:term; $c:term)) => `(Statement.prim Op.add $p1 $p2 $c)
   | `(*( $p1:term, $p2:term; $c:term)) => `(Statement.prim Op.mul $p1 $p2 $c)
