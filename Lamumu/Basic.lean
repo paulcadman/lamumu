@@ -8,12 +8,22 @@ def Op.eval (op : Op) (n m : Int) : Int :=
   | .mul => n * m
   | .sub => n - m
 
-abbrev Var := Nat
+inductive Var where
+  | free : Nat → Var
+  | bound : Nat → Var
+  deriving Repr, DecidableEq
 
 inductive CoVar where
   | star : CoVar
-  | idx : Nat → CoVar
+  | free : Nat → CoVar
+  | bound : Nat → CoVar
   deriving Repr, DecidableEq
+
+instance : Coe Nat Var :=
+  ⟨Var.free⟩
+
+instance : Coe Nat CoVar :=
+  ⟨CoVar.free⟩
 
 namespace Fun
 
@@ -65,36 +75,5 @@ instance : Coe CoVar Consumer :=
 
 instance : Coe Var Producer :=
   ⟨Producer.var⟩
-
-namespace Translate
-
-open Fun
-open Core
-
-abbrev FreshM := StateM Nat
-
-def freshCoVar : FreshM CoVar := do
-  let n ← get
-  set (n + 1)
-  .idx n |> pure
-
-def translate' : Fun.Term → FreshM Core.Producer
- | .var x => pure <| .var x
- | .lit n => pure <| .lit n
- | .bin op t1 t2 => do
-   let α ← freshCoVar
-   let tt1 ← translate' t1
-   let tt2 ← translate' t2
-   .mu α (.prim op tt1 tt2 (.covar α)) |> pure
- | .ifz cond t e => do
-   let α ← freshCoVar
-   let tcond ← translate' cond
-   let tt ← translate' t
-   let te ← translate' e
-   .mu α (.ifz tcond (.cut tt (.covar α)) (.cut te (.covar α))) |> pure
-
-def translate (t : Fun.Term) : Core.Producer := (translate' t).run 0 |>.fst
-
-end Translate
 
 end Core

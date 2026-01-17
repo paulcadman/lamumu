@@ -1,5 +1,6 @@
 import Lean
 import Lamumu.Basic
+import Lamumu.Binding
 
 open Lean
 
@@ -45,12 +46,12 @@ macro_rules
       match parseSubscript "α_" s with
       | some n =>
           let lit := Syntax.mkNumLit (toString <| n)
-          return ← `((CoVar.idx $lit : CoVar))
+          return ← `((CoVar.free $lit : CoVar))
       | none =>
           match parseSubscript "x_" s with
           | some n =>
               let lit := Syntax.mkNumLit (toString n)
-              return ← `(($lit : Var))
+              return ← `((Var.free $lit : Var))
           | none => Macro.throwUnsupported
 
 namespace Core
@@ -84,14 +85,14 @@ macro_rules
       match parseSubscript "α_" s with
       | some n =>
           let lit := Syntax.mkNumLit (toString <| n)
-          `(Producer.mu (CoVar.idx $lit : CoVar) $body)
+          `(Producer.mu (CoVar.free $lit : CoVar) (closeCoVar (CoVar.free $lit : CoVar) $body))
       | none => Macro.throwUnsupported
   | `(μ $id:ident . $body:term) => do
       let s := id.getId.toString
       match parseSubscript "α_" s with
       | some n =>
           let lit := Syntax.mkNumLit (toString <| n)
-          `(Producer.mu (CoVar.idx $lit : CoVar) $body)
+          `(Producer.mu (CoVar.free $lit : CoVar) (closeCoVar (CoVar.free $lit : CoVar) $body))
       | none => Macro.throwUnsupported
 
 syntax "μ̃ " ident " . " term : term
@@ -101,7 +102,7 @@ macro_rules
       match parseSubscript "x_" s with
       | some n =>
           let lit := Syntax.mkNumLit (toString <| n)
-          `(Consumer.mu_tilde $lit $body)
+          `(Consumer.mu_tilde (Var.free $lit : Var) (closeVar (Var.free $lit : Var) $body))
       | none => Macro.throwUnsupported
 
 notation "μ[" α "] " s => Producer.mu α s
