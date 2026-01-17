@@ -1,5 +1,4 @@
 import Lamumu.Basic
-import Lamumu.Notation
 
 namespace Core
 

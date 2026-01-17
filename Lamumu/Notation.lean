@@ -10,20 +10,6 @@ def parseSubscript (pfx : String) (s : String) : Option Nat :=
   else
     none
 
-macro_rules
-  | `($id:ident) => do
-      let s := id.getId.toString
-      match parseSubscript "α_" s with
-      | some n =>
-          let lit := Syntax.mkNumLit (toString <| n)
-          return ← `((CoVar.free $lit : CoVar))
-      | none =>
-          match parseSubscript "x_" s with
-          | some n =>
-              let lit := Syntax.mkNumLit (toString n)
-              return ← `((Var.free $lit : Var))
-          | none => Macro.throwUnsupported
-
 namespace Core
 
 def cut (p : Producer) (c : Consumer) : Statement :=
@@ -38,37 +24,77 @@ def ifz (p : Producer) (s1 s2 : Statement) : Statement :=
 def lit (n : Int) : Producer :=
   Producer.lit n
 
-notation "⟨" p " | " c "⟩" => Statement.cut p c
-syntax "+(" term ", " term "; " term ")" : term
-syntax "*(" term ", " term "; " term ")" : term
-syntax "-(" term ", " term "; " term ")" : term
+scoped notation "⟨" p " | " c "⟩" => Statement.cut p c
+scoped notation "+(" p1 ", " p2 "; " c ")" => Statement.prim Op.add p1 p2 c
+scoped notation "*(" p1 ", " p2 "; " c ")" => Statement.prim Op.mul p1 p2 c
+scoped notation "-(" p1 ", " p2 "; " c ")" => Statement.prim Op.sub p1 p2 c
 
-macro_rules
-  | `(+( $p1:term, $p2:term; $c:term)) => `(Statement.prim Op.add $p1 $p2 $c)
-  | `(*( $p1:term, $p2:term; $c:term)) => `(Statement.prim Op.mul $p1 $p2 $c)
-  | `(-( $p1:term, $p2:term; $c:term)) => `(Statement.prim Op.sub $p1 $p2 $c)
+scoped macro "μ " id:ident " . " body:term : term => do
+  let s := id.getId.toString
+  match parseSubscript "α_" s with
+  | some n =>
+      let lit := Syntax.mkNumLit (toString <| n)
+      `(Producer.mu (CoVar.free $lit : CoVar) (closeCoVar (CoVar.free $lit : CoVar) $body))
+  | none => Macro.throwUnsupported
 
-syntax "μ " ident " . " term : term
-macro_rules
-  | `(μ $id:ident . $body:term) => do
+scoped macro "μ̃ " id:ident " . " body:term : term => do
+  let s := id.getId.toString
+  match parseSubscript "x_" s with
+  | some n =>
+      let lit := Syntax.mkNumLit (toString <| n)
+      `(Consumer.mu_tilde (Var.free $lit : Var) (closeVar (Var.free $lit : Var) $body))
+  | none => Macro.throwUnsupported
+
+scoped notation "⌜" n "⌝" => lit n
+scoped notation "★" => Consumer.covar CoVar.star
+
+scoped macro_rules
+  | `($id:ident) => do
       let s := id.getId.toString
       match parseSubscript "α_" s with
       | some n =>
           let lit := Syntax.mkNumLit (toString <| n)
-          `(Producer.mu (CoVar.free $lit : CoVar) (closeCoVar (CoVar.free $lit : CoVar) $body))
-      | none => Macro.throwUnsupported
+          `((CoVar.free $lit : CoVar))
+      | none =>
+          match parseSubscript "x_" s with
+          | some n =>
+              let lit := Syntax.mkNumLit (toString n)
+              `((Var.free $lit : Var))
+          | none => Macro.throwUnsupported
 
-syntax "μ̃ " ident " . " term : term
-macro_rules
-  | `(μ̃ $id:ident . $body:term) => do
+end Core
+
+namespace Fun
+
+def lit (n : Int) : Term :=
+  Term.lit n
+
+def ifz (t t1 t2 : Term) : Term :=
+  Term.ifz t t1 t2
+
+scoped notation "⌜" n "⌝" => lit n
+scoped notation:70 t1 " + " t2 => Term.bin Op.add t1 t2
+scoped notation:70 t1 " * " t2 => Term.bin Op.mul t1 t2
+scoped notation:70 t1 " - " t2 => Term.bin Op.sub t1 t2
+
+scoped syntax "let " ident " := " term " in " term : term
+
+scoped macro_rules
+  | `($id:ident) => do
       let s := id.getId.toString
       match parseSubscript "x_" s with
       | some n =>
-          let lit := Syntax.mkNumLit (toString <| n)
-          `(Consumer.mu_tilde (Var.free $lit : Var) (closeVar (Var.free $lit : Var) $body))
+          let lit := Syntax.mkNumLit (toString n)
+          `((Var.free $lit : Var))
       | none => Macro.throwUnsupported
 
-notation "⌜" n "⌝" => lit n
-notation "★" => Consumer.covar CoVar.star
+scoped macro_rules
+  | `(let $id:ident := $assign:term in $body:term) => do
+      let s := id.getId.toString
+      match parseSubscript "x_" s with
+      | some n =>
+          let lit := Syntax.mkNumLit (toString n)
+          `(Term.let (Var.free $lit) $assign $body)
+      | none => Macro.throwUnsupported
 
-end Core
+end Fun

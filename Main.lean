@@ -1,8 +1,12 @@
 import Lamumu
 
-open Core
 open Evaluate
 open Focus
+
+namespace CoreExamples
+
+open Core
+open scoped Core
 
 def traceEval (e : Except EvalError Statement) : Except EvalError Statement :=
   match e with
@@ -31,6 +35,37 @@ def ex2 := ⟨μ α_0 . (*(⌜4⌝, (μ α_1 . *(⌜2⌝, ⌜3⌝; α_1)); α_0)
   |>.bind step -- ⟨⌜24⌝ | ★⟩
 
 #guard ex2 = .ok ⟨⌜24⌝ | ★⟩
+
+end CoreExamples
+
+namespace FunExamples
+
+open Fun
+
+open scoped Fun
+
+-- Translate a term from Fun to Core
+def fun_ex1 : Except EvalError Core.Statement :=
+  (⌜2⌝ * ⌜3⌝)
+  |> Fun.translate
+  |> step
+  |>.bind step
+
+open scoped Core in
+#guard fun_ex1 = .ok ⟨⌜6⌝ | ★⟩
+
+def fun_ex_let : Except EvalError Core.Statement :=
+  (let x_0 := ⌜2⌝ in x_0 + ⌜3⌝)
+  |> Fun.translate
+  |> step
+  |>.bind step
+  |>.bind step
+  |>.bind step
+
+open scoped Core in
+#guard fun_ex_let = .ok ⟨⌜5⌝ | ★⟩
+
+end FunExamples
 
 def main : IO Unit :=
   IO.println "hello"

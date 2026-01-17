@@ -25,21 +25,6 @@ instance : Coe Nat Var :=
 instance : Coe Nat CoVar :=
   ⟨CoVar.free⟩
 
-namespace Fun
-
-inductive Term where
- | var : Var → Term
- | lit : Int → Term
- | bin : Op → Term → Term → Term
- | ifz : Term → Term → Term → Term
- deriving Repr
-
-def isValue : Term → Bool
- | .lit _ => true
- | _ => false
-
-end Fun
-
 namespace Core
 
 mutual
@@ -77,3 +62,23 @@ instance : Coe Var Producer :=
   ⟨Producer.var⟩
 
 end Core
+
+namespace Fun
+
+inductive Term where
+ | var : Var → Term
+ | lit : Int → Term
+ | bin : Op → Term → Term → Term
+ | ifz : Term → Term → Term → Term
+ | let : Var → Term → Term → Term
+ deriving Repr
+
+def isValue : Term → Bool
+ | .lit _ => true
+ | _ => false
+
+
+instance : Coe Var Term :=
+  ⟨Term.var⟩
+
+end Fun
