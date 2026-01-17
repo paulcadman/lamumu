@@ -20,7 +20,6 @@ declare_syntax_cat coreOp
 syntax num : coreProducer
 syntax "-" num : coreProducer
 syntax ident : coreProducer
-syntax "mu " ident " . " coreStatement : coreProducer
 syntax "μ " ident " . " coreStatement : coreProducer
 
 syntax ident : coreConsumer
@@ -77,16 +76,8 @@ macro_rules
   | `(*( $p1:term, $p2:term; $c:term)) => `(Statement.prim Op.mul $p1 $p2 $c)
   | `(-( $p1:term, $p2:term; $c:term)) => `(Statement.prim Op.sub $p1 $p2 $c)
 
-syntax "mu " ident " . " term : term
 syntax "μ " ident " . " term : term
 macro_rules
-  | `(mu $id:ident . $body:term) => do
-      let s := id.getId.toString
-      match parseSubscript "α_" s with
-      | some n =>
-          let lit := Syntax.mkNumLit (toString <| n)
-          `(Producer.mu (CoVar.free $lit : CoVar) (closeCoVar (CoVar.free $lit : CoVar) $body))
-      | none => Macro.throwUnsupported
   | `(μ $id:ident . $body:term) => do
       let s := id.getId.toString
       match parseSubscript "α_" s with
@@ -105,8 +96,6 @@ macro_rules
           `(Consumer.mu_tilde (Var.free $lit : Var) (closeVar (Var.free $lit : Var) $body))
       | none => Macro.throwUnsupported
 
-notation "μ[" α "] " s => Producer.mu α s
-notation "mu[" α "] " s => Producer.mu α s
 notation "⌜" n "⌝" => lit n
 notation "★" => Consumer.covar CoVar.star
 
